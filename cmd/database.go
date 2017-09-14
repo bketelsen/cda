@@ -1,4 +1,5 @@
-// +build !windows !darwin
+// +build !darwin
+// +build !windows
 
 package cmd
 

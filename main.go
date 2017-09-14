@@ -22,6 +22,12 @@ package main
 
 import "github.com/bketelsen/cda/cmd"
 
+var (
+	CommitHash string
+	BuildTime  string
+	Tag        string
+)
+
 func main() {
 	cmd.Execute()
 }

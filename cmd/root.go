@@ -39,6 +39,12 @@ var cfgFile, Alias, Channel, Event string
 
 var baseURL string
 
+var (
+	CommitHash string
+	BuildTime  string
+	Tag        string
+)
+
 type Submission struct {
 	URL string `json:"url"`
 }

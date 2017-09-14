@@ -1,5 +1,8 @@
 cda
 cda.exe
+cda-linux
+cda-darwin
+cda-mac
 
 # Binaries for programs and plugins
 *.exe
@@ -15,3 +18,6 @@ cda.exe
 
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
+
+# output from makefile
+target/

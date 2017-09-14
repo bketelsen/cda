@@ -1,4 +1,5 @@
-// +build !windows !darwin
+// +build !darwin
+// +build !windows
 
 // Copyright © 2017 NAME HERE <EMAIL ADDRESS>
 //
