@@ -24,7 +24,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 
 	"github.com/asaskevich/govalidator"
@@ -126,7 +125,7 @@ func encodeHandler(response http.ResponseWriter, request *http.Request, db Datab
 		http.Error(response, `{"error": "Not a valid short code"}`, http.StatusBadRequest)
 		return
 	}
-	id, shortcode, err := db.Save(data.ShortCode, data.URL)
+	shortcode, err := db.Save(data.ShortCode, data.URL)
 	if err != nil {
 		log.Println(err)
 		if strings.Contains(err.Error(), "constraint") {
@@ -138,7 +137,7 @@ func encodeHandler(response http.ResponseWriter, request *http.Request, db Datab
 		return
 	}
 
-	resp := map[string]string{"url": baseURL + shortcode, "id": strconv.Itoa(int(id)), "short_code": shortcode, "error": ""}
+	resp := map[string]string{"url": baseURL + shortcode, "short_code": shortcode, "error": ""}
 	jsonData, _ := json.Marshal(resp)
 	response.Write(jsonData)
 

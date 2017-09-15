@@ -52,7 +52,6 @@ type Submission struct {
 
 type Response struct {
 	URL   string `json:"url"`
-	ID    string `json:"id"`
 	ShortCode string `json:"short_code"`
 	Error string `json:"error"`
 }

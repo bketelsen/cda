@@ -14,40 +14,43 @@ import (
 // Database interface
 type Database interface {
 	Get(shortcode string) (string, error)
-	Save(shortcode, url string) (int64, string, error)
+	Save(shortcode, url string) (string, error)
 }
 
 type sqlite struct {
 	Path string
 }
 
-func (s sqlite) Save(shortcode, url string) (int64, string, error) {
+func (s sqlite) Save(shortcode, url string) (string, error) {
 	if len(strings.TrimSpace(shortcode)) == 0 && len(strings.TrimSpace(url)) == 0 {
-		return 0, shortcode, errors.New("Empty shortcode or URL given")
+		return shortcode, errors.New("Empty shortcode or URL given")
 	}
 	db, err := sql.Open("sqlite3", s.Path)
 	tx, err := db.Begin()
 	if err != nil {
-		return 0, shortcode, err
+		return shortcode, err
 	}
 	stmt, err := tx.Prepare("insert into urls(shortcode, url) values(?,?)")
 	if err != nil {
-		return 0, shortcode, err
+		return shortcode, err
 	}
 	defer stmt.Close()
 	result, err := stmt.Exec(shortcode, url)
 	if err != nil {
 		tx.Rollback()
-		return 0, shortcode, err
+		return shortcode, err
 	}
 
-	id, err := result.LastInsertId()
+	ra, err := result.RowsAffected()
 	if err != nil {
-		return 0, shortcode, err
+		return shortcode, err
+	}
+	if ra == 0 {
+		return shortcode, errors.New("no rows inserted")
 	}
 	tx.Commit()
 	//result
-	return id, shortcode, nil
+	return shortcode, nil
 }
 
 func (s sqlite) Get(shortcode string) (string, error) {
