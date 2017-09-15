@@ -47,11 +47,12 @@ var (
 
 type Submission struct {
 	URL string `json:"url"`
+	ShortCode string `json:"short_code"`
 }
 
 type Response struct {
 	URL   string `json:"url"`
-	ID    string `json:"id"`
+	ShortCode string `json:"short_code"`
 	Error string `json:"error"`
 }
 
@@ -59,14 +60,14 @@ const track = "?WT.mc_id"
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "cda URL",
+	Use:   "cda URL SHORTCODE",
 	Short: "a URL Shortening service and corresponding command line tool",
 	Long: `cda is a URL shortening service that automatically appends
 the appropriate tracking tags to a URL.  The command line tool can be
 used to submit a new link using personalized values.`,
-	Args: cobra.ExactArgs(1),
+	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := submit(args[0])
+		err := submit(args[0], args[1])
 		if err != nil {
 			fmt.Println("Error: ", err)
 		}
@@ -74,7 +75,7 @@ used to submit a new link using personalized values.`,
 	},
 }
 
-func submit(url string) error {
+func submit(url, shortCode string) error {
 	Alias = viper.GetString("alias")
 	Channel = viper.GetString("channel")
 	Event = viper.GetString("event")
@@ -82,7 +83,6 @@ func submit(url string) error {
 		fmt.Println("Alias is required.  Set with -a or in config file.")
 		return errors.New("Alias not provided.")
 	}
-
 	if Event == "" {
 		fmt.Println("Event is required.  Set with -e or in config file.")
 		return errors.New("Event not provided.")
@@ -91,16 +91,16 @@ func submit(url string) error {
 		fmt.Println("Channel is required.  Set with -c or in config file.")
 		return errors.New("Channel not provided.")
 	}
+
 	reqURL := build(url)
 	// submit to server
-	fmt.Println("Submitting to ", baseURL)
-	jsonValue, err := json.Marshal(Submission{URL: reqURL})
+	fmt.Println("Submitting", url, "to", baseURL, "with shortcode", shortCode)
+	jsonValue, err := json.Marshal(Submission{ShortCode: shortCode, URL: reqURL})
 	if err != nil {
 		return errors.Wrap(err, "creating JSON")
 	}
 	resp, err := http.Post(baseURL+"/save", "application/json", bytes.NewBuffer(jsonValue))
 	if err != nil {
-
 		return errors.Wrap(err, "posting to server")
 	}
 	defer resp.Body.Close()
@@ -110,6 +110,9 @@ func submit(url string) error {
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		return errors.Wrap(err, "Unmarshaling result")
+	}
+	if resp.StatusCode != 200 {
+		return errors.New(result.Error)
 	}
 	fmt.Println(result.URL)
 	err = clipboard.WriteAll(result.URL)

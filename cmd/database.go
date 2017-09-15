@@ -6,54 +6,62 @@ package cmd
 import (
 	"database/sql"
 	"log"
-
+	"strings"
+	"errors"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 // Database interface
 type Database interface {
-	Get(id int) (string, error)
-	Save(url string) (int64, error)
+	Get(shortcode string) (string, error)
+	Save(shortcode, url string) (string, error)
 }
 
 type sqlite struct {
 	Path string
 }
 
-func (s sqlite) Save(url string) (int64, error) {
+func (s sqlite) Save(shortcode, url string) (string, error) {
+	if len(strings.TrimSpace(shortcode)) == 0 && len(strings.TrimSpace(url)) == 0 {
+		return shortcode, errors.New("Empty shortcode or URL given")
+	}
 	db, err := sql.Open("sqlite3", s.Path)
 	tx, err := db.Begin()
 	if err != nil {
-		return 0, err
+		return shortcode, err
 	}
-	stmt, err := tx.Prepare("insert into urls(url) values(?)")
+	stmt, err := tx.Prepare("insert into urls(shortcode, url) values(?,?)")
 	if err != nil {
-		return 0, err
+		return shortcode, err
 	}
 	defer stmt.Close()
-	result, err := stmt.Exec(url)
+	result, err := stmt.Exec(shortcode, url)
 	if err != nil {
-		return 0, err
+		tx.Rollback()
+		return shortcode, err
 	}
 
-	id, err := result.LastInsertId()
+	ra, err := result.RowsAffected()
 	if err != nil {
-		return 0, nil
+		return shortcode, err
+	}
+	if ra == 0 {
+		return shortcode, errors.New("no rows inserted")
 	}
 	tx.Commit()
 	//result
-	return id, nil
+	return shortcode, nil
 }
 
-func (s sqlite) Get(id int) (string, error) {
+func (s sqlite) Get(shortcode string) (string, error) {
 	db, err := sql.Open("sqlite3", s.Path)
-	stmt, err := db.Prepare("select url from urls where id = ?")
+	stmt, err := db.Prepare("select url from urls where shortcode = ?")
 	if err != nil {
 		return "", err
 	}
 	defer stmt.Close()
 	var url string
-	err = stmt.QueryRow(id).Scan(&url)
+	err = stmt.QueryRow(shortcode).Scan(&url)
 	if err != nil {
 		return "", err
 	}
@@ -67,7 +75,7 @@ func (s sqlite) Init() {
 	}
 	defer c.Close()
 
-	sqlStmt := `create table if not exists urls (id integer not null primary key, url text);`
+	sqlStmt := `create table if not exists urls (shortcode text not null primary key, url text);`
 	_, err = c.Exec(sqlStmt)
 	if err != nil {
 		log.Fatal(err)
