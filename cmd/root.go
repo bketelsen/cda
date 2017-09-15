@@ -60,7 +60,7 @@ const track = "?WT.mc_id"
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "cda URL ShortCode",
+	Use:   "cda URL SHORTCODE",
 	Short: "a URL Shortening service and corresponding command line tool",
 	Long: `cda is a URL shortening service that automatically appends
 the appropriate tracking tags to a URL.  The command line tool can be
