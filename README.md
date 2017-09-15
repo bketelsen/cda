@@ -77,3 +77,24 @@ $ cda -a brketels -e ignite https://microsoft.com
 > Channel is required.  Set with -c or in config file.
 ```
 
+# Developing 
+
+### Building from source
+
+1. Checkout the repository into `$GOPATH/src/github.com/bketelsen/cda` 
+
+*Note:* The source expects `bketelsen/cda` and not `bketelsen/cda.ms`!
+
+2. Use the makefile to build a binary
+
+```bash
+$ make
+```
+
+3. The makefile will drop off an executable in the top level directory of the repository.
+
+```bash
+$ chmod +x cda 
+$ mv cda /usr/local/bin # ...or somewhere in your executable $PATH
+$ cda --help
+```
