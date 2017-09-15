@@ -30,6 +30,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 )
 
@@ -90,8 +91,9 @@ func serve() {
 		decodeHandler(response, request, db)
 	})
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("public")))
+	h := cors.Default().Handler(r)
 	log.Println("Starting server on port :1337")
-	log.Fatal(http.ListenAndServe(":1337", handlers.LoggingHandler(os.Stdout, r)))
+	log.Fatal(http.ListenAndServe(":1337", handlers.LoggingHandler(os.Stdout, h)))
 }
 
 const base string = "0123456789bcdfghjkmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ"
