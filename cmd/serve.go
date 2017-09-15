@@ -21,10 +21,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math"
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/asaskevich/govalidator"
@@ -86,7 +86,7 @@ func serve() {
 		func(response http.ResponseWriter, request *http.Request) {
 			encodeHandler(response, request, db, baseURL)
 		}).Methods("POST")
-	r.HandleFunc("/{id}", func(response http.ResponseWriter, request *http.Request) {
+	r.HandleFunc("/{shortcode}", func(response http.ResponseWriter, request *http.Request) {
 		decodeHandler(response, request, db)
 	})
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("public")))
@@ -94,32 +94,9 @@ func serve() {
 	log.Fatal(http.ListenAndServe(":1337", handlers.LoggingHandler(os.Stdout, r)))
 }
 
-const base string = "0123456789bcdfghjkmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ"
-
-func encode(n int64) string {
-	var s string
-	var num = float64(n)
-
-	for num > 0 {
-		s = string(base[int(num)%len(base)]) + s
-		num = math.Floor(num / float64(len(base)))
-	}
-
-	return s
-}
-
-func decode(s string) int {
-	var num = 0
-	for _, element := range strings.Split(s, "") {
-		num = num*len(base) + strings.Index(base, element)
-	}
-
-	return num
-}
-
 func decodeHandler(response http.ResponseWriter, request *http.Request, db Database) {
-	id := decode(mux.Vars(request)["id"])
-	url, err := db.Get(id)
+	shortcode := mux.Vars(request)["shortcode"]
+	url, err := db.Get(shortcode)
 	if err != nil {
 		http.Error(response, `{"error": "No such URL"}`, http.StatusNotFound)
 		return
@@ -130,26 +107,36 @@ func decodeHandler(response http.ResponseWriter, request *http.Request, db Datab
 func encodeHandler(response http.ResponseWriter, request *http.Request, db Database, baseURL string) {
 	decoder := json.NewDecoder(request.Body)
 	var data struct {
-		URL string `json:"url"`
+		URL       string `json:"url"`
+		ShortCode string `json:"short_code"`
 	}
 	err := decoder.Decode(&data)
 	if err != nil {
 		http.Error(response, `{"error": "Unable to parse json"}`, http.StatusBadRequest)
 		return
 	}
-
 	if !govalidator.IsURL(data.URL) {
 		http.Error(response, `{"error": "Not a valid URL"}`, http.StatusBadRequest)
 		return
 	}
 
-	id, err := db.Save(data.URL)
+	if data.ShortCode == "" {
+		http.Error(response, `{"error": "Not a valid short code"}`, http.StatusBadRequest)
+		return
+	}
+	id, shortcode, err := db.Save(data.ShortCode, data.URL)
 	if err != nil {
 		log.Println(err)
+		if strings.Contains(err.Error(), "constraint") {
+
+			http.Error(response, `{"error": "duplicate short code"}`, http.StatusBadRequest)
+			return
+		}
+		http.Error(response, `{"error": "unable to save"}`, http.StatusInternalServerError)
 		return
 	}
 
-	resp := map[string]string{"url": baseURL + encode(id), "id": encode(id), "error": ""}
+	resp := map[string]string{"url": baseURL + shortcode, "id": strconv.Itoa(int(id)), "short_code": shortcode, "error": ""}
 	jsonData, _ := json.Marshal(resp)
 	response.Write(jsonData)
 
