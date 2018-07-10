@@ -2,7 +2,7 @@ project_name: cda
 release:
   github:
     owner: bketelsen
-    name: cda.ms
+    name: cda
   name_template: '{{.Tag}}'
 brew:
   commit_author:
