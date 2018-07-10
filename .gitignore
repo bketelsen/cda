@@ -21,3 +21,4 @@ cda-mac
 
 # output from makefile
 target/
+.envrc
