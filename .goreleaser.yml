@@ -35,8 +35,6 @@ archive:
   - README*
   - changelog*
   - CHANGELOG*
-fpm:
-  bindir: /usr/local/bin
 snapshot:
   name_template: SNAPSHOT-{{ .Commit }}
 checksum:
