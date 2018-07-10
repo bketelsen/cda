@@ -6,7 +6,7 @@ DOCKER_IMAGE := cda
 build_dir := $(CURDIR)/bin
 dist_dir := $(CURDIR)/dist
 exec := $(DOCKER_IMAGE)
-github_repo := bketelsen/cda.ms
+github_repo := bketelsen/cda
 
 # comment this line out for quieter things
 V := 1 # When V is set, print commands and build progress.
