@@ -65,7 +65,7 @@ func init() {
 func serve() {
 
 	if os.Getenv("BASE_URL") == "" {
-		baseURL = "cda.ms"
+		baseURL = "https://cda.ms"
 	}
 	if os.Getenv("DB_PATH") == "" {
 		var err error

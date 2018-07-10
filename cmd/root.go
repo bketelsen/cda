@@ -135,7 +135,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	if os.Getenv("BASE_URL") == "" {
-		baseURL = "cda.ms"
+		baseURL = "https://cda.ms"
 	} else {
 		baseURL = os.Getenv("BASE_URL")
 	}
@@ -143,7 +143,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cda.yaml)")
-	RootCmd.PersistentFlags().StringVar(&baseURL, "server", "http://cda.ms", "URL Shortening server")
+	RootCmd.PersistentFlags().StringVar(&baseURL, "server", "https://cda.ms", "URL Shortening server")
 	RootCmd.PersistentFlags().StringVarP(&Alias, "alias", "a", "", "CDA Alias")
 	viper.BindPFlag("alias", RootCmd.PersistentFlags().Lookup("alias"))
 	RootCmd.PersistentFlags().StringVarP(&Event, "event", "e", "", "event")
