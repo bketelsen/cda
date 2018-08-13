@@ -27,6 +27,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/atotto/clipboard"
 	homedir "github.com/mitchellh/go-homedir"
@@ -47,13 +48,12 @@ var (
 
 type Submission struct {
 	URL string `json:"url"`
-	ShortCode string `json:"short_code"`
 }
 
 type Response struct {
-	URL   string `json:"url"`
+	URL       string `json:"url"`
 	ShortCode string `json:"short_code"`
-	Error string `json:"error"`
+	Error     string `json:"error"`
 }
 
 const track = "?WT.mc_id"
@@ -65,9 +65,9 @@ var RootCmd = &cobra.Command{
 	Long: `cda is a URL shortening service that automatically appends
 the appropriate tracking tags to a URL.  The command line tool can be
 used to submit a new link using personalized values.`,
-	Args: cobra.ExactArgs(2),
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := submit(args[0], args[1])
+		err := submit(args[0])
 		if err != nil {
 			fmt.Println("Error: ", err)
 		}
@@ -75,7 +75,11 @@ used to submit a new link using personalized values.`,
 	},
 }
 
-func submit(url, shortCode string) error {
+func submit(url string) error {
+
+	if !strings.HasPrefix(url, "http") {
+		return errors.New("URL must have protocol http:// or https://")
+	}
 	Alias = viper.GetString("alias")
 	Channel = viper.GetString("channel")
 	Event = viper.GetString("event")
@@ -94,21 +98,27 @@ func submit(url, shortCode string) error {
 
 	reqURL := build(url)
 	// submit to server
-	fmt.Println("Submitting", url, "to", baseURL, "with shortcode", shortCode)
-	jsonValue, err := json.Marshal(Submission{ShortCode: shortCode, URL: reqURL})
+	fmt.Println("Submitting", url, "to", baseURL)
+	jsonValue, err := json.Marshal(Submission{URL: reqURL})
 	if err != nil {
 		return errors.Wrap(err, "creating JSON")
 	}
-	resp, err := http.Post(baseURL+"/save", "application/json", bytes.NewBuffer(jsonValue))
+	req, err := http.NewRequest("POST", baseURL+"/save", bytes.NewBuffer(jsonValue))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "posting to server")
+		panic(err)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	var result Response
+
 	err = json.Unmarshal(body, &result)
 	if err != nil {
+		fmt.Println("Received error", string(body))
 		return errors.Wrap(err, "Unmarshaling result")
 	}
 	if resp.StatusCode != 200 {
@@ -138,15 +148,16 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	if os.Getenv("BASE_URL") == "" {
-		baseURL = "cda.ms"
+		baseURL = "https://cda.ms"
 	} else {
 		baseURL = os.Getenv("BASE_URL")
+
 	}
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cda.yaml)")
-	RootCmd.PersistentFlags().StringVar(&baseURL, "server", "http://cda.ms", "URL Shortening server")
+	RootCmd.PersistentFlags().StringVar(&baseURL, "server", "https://cda.ms", "URL Shortening server")
 	RootCmd.PersistentFlags().StringVarP(&Alias, "alias", "a", "", "CDA Alias")
 	viper.BindPFlag("alias", RootCmd.PersistentFlags().Lookup("alias"))
 	RootCmd.PersistentFlags().StringVarP(&Event, "event", "e", "", "event")

@@ -1,41 +1,34 @@
+# This is an example goreleaser.yaml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
 project_name: cda
-release:
-  github:
-    owner: bketelsen
-    name: cda
-  name_template: '{{.Tag}}'
-brew:
-  commit_author:
-    name: cda
-    email: bketelsen@gmail.com
-  install: bin.install "cda"
 builds:
-- goos:
-  - linux
-  - darwin
+-
+  goos:
   - windows
-  goarch:
-  - amd64
-  - "386"
-  goarm:
-  - "6"
-  main: .
-  ldflags: -s -w -X main.Version={{.Version}}  -X main.BuildDate={{.Date}}
-  binary: cda
+  - darwin
+  - linux
+  env:
+  - CGO_ENABLED=0
+    # Custom ldflags templates.
+    # Default is `-s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}`.
+  ldflags:
+  - -s -w -X main.Version={{.Version}} -X main.Commit={{.Commit}} -X main.Date={{.Date}}
 archive:
-  format: tar.gz
-  name_template: '{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{
-    .Arm }}{{ end }}'
-  files:
-  - licence*
-  - LICENCE*
-  - license*
-  - LICENSE*
-  - readme*
-  - README*
-  - changelog*
-  - CHANGELOG*
-snapshot:
-  name_template: SNAPSHOT-{{ .Commit }}
+  replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    386: i386
+    amd64: x86_64
 checksum:
-  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+git:
+  short_hash: true
