@@ -1,4 +1,4 @@
-module github.com/arschles/cda
+module github.com/bketelsen/cda
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20170903095215-73945b6115bf
