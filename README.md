@@ -79,19 +79,19 @@ $ cda -a brketels -e ignite https://microsoft.com
 
 # Developing 
 
-### Building from source
+## Building from source
 
-1. Checkout the repository into `$GOPATH/src/github.com/bketelsen/cda` 
+You need Go 1.11 or above to use this properly.
 
-*Note:* The source expects `bketelsen/cda` and not `bketelsen/cda.ms`!
-
-2. Use the makefile to build a binary
+1. Checkout the repository. If you put it into the `GOPATH`, you must set `GO111MODULE` to `on`
+  * Optionally set `GOPROXY` to `https://microsoftgoproxy.azurewebsites.net` for more reliable builds. That server is experimental and might go away, though
+1. Use the makefile to build a binary
 
 ```bash
 $ make
 ```
 
-3. The makefile will drop off an executable in the top level directory of the repository.
+1. The makefile will drop off an executable in the top level directory of the repository.
 
 ```bash
 $ chmod +x cda 
